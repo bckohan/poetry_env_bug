@@ -1,0 +1,41 @@
+name: Test
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Open ssh debug session.'
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+
+  show-bug:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    env:
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      id: install
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: setup-ssh-debug
+      if: ${{ github.event.inputs.debug == 'true' }}
+      uses: mxschmitt/action-tmate@v3
+      with:
+        detached: true
+      timeout-minutes: 60
+    - name: Install Poetry
+      run: |
+        pipx install poetry
+    - name: Install
+      run: |
+        poetry env use ${{ steps.install.outputs.python-path }}
+        poetry run python --version 2>&1 | grep -q "^Python ${TEST_PYTHON_VERSION//./\\.}" || exit 1
