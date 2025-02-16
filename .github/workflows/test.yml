@@ -1,7 +1,14 @@
 name: Test
 
 on:
+  push:
   workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Open ssh debug session.'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
 
@@ -19,6 +26,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: setup-ssh-debug
+      if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@v3
       with:
         detached: true
